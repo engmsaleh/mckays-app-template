@@ -1,7 +1,7 @@
 "use client"
 
+import { type Customer } from "@/actions/customers"
 import { Button } from "@/components/ui/button"
-import { SelectCustomer } from "@/db/schema/customers"
 import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs"
 import { Menu, Moon, Sun, X, Sparkles } from "lucide-react"
 import { useTheme } from "next-themes"
@@ -9,7 +9,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 
 interface HeaderProps {
-  userMembership: SelectCustomer["membership"] | null
+  userMembership: Customer["membership"] | null
 }
 
 export function Header({ userMembership }: HeaderProps) {

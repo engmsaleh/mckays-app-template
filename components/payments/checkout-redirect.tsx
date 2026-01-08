@@ -1,6 +1,6 @@
 "use client"
 
-import { createCheckoutUrl } from "@/actions/stripe"
+import { createPolarCheckout } from "@/actions/polar"
 import { useAuth } from "@clerk/nextjs"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
@@ -23,7 +23,7 @@ export function CheckoutRedirect() {
       sessionStorage.removeItem("pendingCheckout")
 
       try {
-        const result = await createCheckoutUrl(pendingCheckout)
+        const result = await createPolarCheckout(pendingCheckout)
 
         if (result.error) {
           toast.error(result.error)
@@ -31,7 +31,7 @@ export function CheckoutRedirect() {
         }
 
         if (result.url) {
-          // Redirect to Stripe checkout
+          // Redirect to Polar checkout
           window.location.href = result.url
         }
       } catch (error) {

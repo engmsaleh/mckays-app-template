@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ### Development
-- `npm run dev` - Start development server with Turbopack
+- `npm run dev` - Start development server with Turbopack + Convex
 - `npm run build` - Build for production
 - `npm run start` - Start production server
 
@@ -16,12 +16,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run format:write` - Format code with Prettier
 - `npm run clean` - Run both lint:fix and format:write
 
-### Database
-- `npx drizzle-kit push` - Push schema changes to database
-- `npx drizzle-kit generate` - Generate migration files
-- `npx drizzle-kit migrate` - Run migrations
-- `npx bun db/seed` - Seed database
-- `npx supabase start` - Start local Supabase instance
+### Database (Convex)
+- `npx convex dev` - Start Convex development server (syncs schema and functions)
+- `npx convex deploy` - Deploy Convex to production
 
 ### Testing
 - `npm run test` - Run all tests (unit + e2e)
@@ -41,23 +38,28 @@ This is a Next.js 15 SaaS template using the App Router with clear separation be
   - `(auth)` - Login and signup flows
 - `/app/(authenticated)` - Protected routes requiring Clerk auth
   - `dashboard` - Main application with account, billing, support sections
-- `/app/api` - API routes including Stripe webhook handler
+- `/app/api` - API routes including Polar webhook handler
 
 ### Key Patterns
-- **Server Actions** in `/actions` for data mutations (customers, Stripe operations)
-- **Database Schema** in `/db/schema` using Drizzle ORM with PostgreSQL
+- **Server Actions** in `/actions` for data mutations (customers, Polar operations)
+- **Database Schema** in `/convex/schema.ts` using Convex
+- **Database Functions** in `/convex/customers.ts` for queries and mutations
 - **UI Components** in `/components/ui` from Shadcn UI library
 - **Authentication** handled by Clerk middleware with protected route groups
-- **Payments** integrated via Stripe with webhook handling
+- **Payments** integrated via Polar with webhook handling
 
 ### Data Flow
 1. Authentication state managed by Clerk (`@clerk/nextjs`)
-2. Customer data stored in PostgreSQL via Drizzle ORM
-3. Stripe integration for subscription management
+2. Customer data stored in Convex (real-time database)
+3. Polar integration for subscription management
 4. Server actions handle all data mutations with proper auth checks
 
 ### Environment Variables Required
+- `NEXT_PUBLIC_CONVEX_URL` - Convex deployment URL
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` - Clerk public key
 - `CLERK_SECRET_KEY` - Clerk secret key
-- `STRIPE_SECRET_KEY` - Stripe secret key
-- Database connection handled by Supabase CLI
+- `CLERK_JWT_ISSUER_DOMAIN` - Clerk JWT issuer for Convex auth
+- `POLAR_ACCESS_TOKEN` - Polar API access token
+- `POLAR_WEBHOOK_SECRET` - Polar webhook signing secret
+- `NEXT_PUBLIC_POLAR_PRODUCT_ID_MONTHLY` - Polar monthly product ID
+- `NEXT_PUBLIC_POLAR_PRODUCT_ID_YEARLY` - Polar yearly product ID

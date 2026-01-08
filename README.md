@@ -1,53 +1,175 @@
 # Mckay's App Template
 
-This is a full-stack app template that I use to build my own apps.
+A production-ready full-stack SaaS template with authentication, payments, and real-time database.
 
 To learn how to use this template with the best AI tools & workflows, check out my workshops on [Takeoff](https://JoinTakeoff.com/)!
 
 ## Tech Stack
 
-- Frontend: [Next.js](https://nextjs.org/docs), [Tailwind](https://tailwindcss.com/docs/guides/nextjs), [Shadcn](https://ui.shadcn.com/docs/installation), [Framer Motion](https://www.framer.com/motion/introduction/)
-- Backend: [PostgreSQL](https://www.postgresql.org/about/), [Supabase](https://supabase.com/), [Drizzle](https://orm.drizzle.team/docs/get-started-postgresql), [Server Actions](https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions-and-mutations)
-- Auth: [Clerk](https://clerk.com/)
-- Payments: [Stripe](https://stripe.com/)
+| Layer | Technology |
+|-------|------------|
+| Framework | [Next.js 15](https://nextjs.org/docs) (App Router) |
+| Styling | [Tailwind CSS](https://tailwindcss.com/docs), [Shadcn UI](https://ui.shadcn.com/) |
+| Animations | [Framer Motion](https://www.framer.com/motion/) |
+| Database | [Convex](https://convex.dev/) (real-time) |
+| Auth | [Clerk](https://clerk.com/) |
+| Payments | [Polar](https://polar.sh/) |
+| Deployment | [Railway](https://railway.com/) |
 
 ## Prerequisites
 
-You will need accounts for the following services.
+Create accounts for these services (all have free tiers):
 
-They all have free plans that you can use to get started.
+- [GitHub](https://github.com/) - Source control
+- [Convex](https://convex.dev/) - Database
+- [Clerk](https://clerk.com/) - Authentication
+- [Polar](https://polar.sh/) - Payments
+- [Railway](https://railway.com/) - Deployment
 
-- Create a [GitHub](https://github.com/) account
-- Create a [Supabase](https://supabase.com/) account
-- Create a [Clerk](https://clerk.com/) account
-- Create a [Stripe](https://stripe.com/) account
-- Create a [Vercel](https://vercel.com/) account
+## Quick Start
 
-You will likely not need paid plans unless you are building a business.
+```bash
+# 1. Clone and install
+git clone <your-repo>
+cd <your-repo>
+npm install
+
+# 2. Set up environment
+cp .env.example .env.local
+# Fill in your environment variables (see below)
+
+# 3. Initialize Convex
+npx convex dev
+# This creates the database and generates types
+
+# 4. Run development server
+npm run dev
+```
 
 ## Environment Variables
 
+Copy `.env.example` to `.env.local` and configure:
+
+### Convex Database
 ```bash
-# DB
-DATABASE_URL=
-# Access Supabase Studio here: http://127.0.0.1:54323/project/default
+NEXT_PUBLIC_CONVEX_URL=https://your-project.convex.cloud
+```
+Get this by running `npx convex dev` and creating a project.
 
-# Clerk
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
-CLERK_SECRET_KEY=
-NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login # do not change
-NEXT_PUBLIC_CLERK_SIGN_UP_URL=/signup # do not change
-
-# Stripe
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
-NEXT_PUBLIC_STRIPE_PAYMENT_LINK_YEARLY=
-NEXT_PUBLIC_STRIPE_PAYMENT_LINK_MONTHLY=
+### Clerk Authentication
+```bash
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+CLERK_JWT_ISSUER_DOMAIN=https://your-instance.clerk.accounts.dev
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/signup
 ```
 
-## Setup
+### Polar Payments
+```bash
+POLAR_ACCESS_TOKEN=polar_pat_...
+POLAR_WEBHOOK_SECRET=...
+NEXT_PUBLIC_POLAR_PRODUCT_ID_MONTHLY=prod_...
+NEXT_PUBLIC_POLAR_PRODUCT_ID_YEARLY=prod_...
+```
 
-1. Clone the repository
-2. Copy `.env.example` to `.env.local` and fill in the environment variables from above
-3. Run `npm install` to install dependencies
-4. Run `npm run dev` to run the app locally
+### App URL
+```bash
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+## Setup Guides
+
+### 1. Convex Setup
+
+1. Run `npx convex dev` - log in and create a project
+2. Copy `NEXT_PUBLIC_CONVEX_URL` from the terminal output
+3. The `convex/_generated` folder will be created automatically
+
+### 2. Clerk + Convex Integration
+
+1. Go to [Clerk Dashboard](https://dashboard.clerk.com) → JWT Templates
+2. Click "New template" → Select "Blank"
+3. Name it exactly `convex`
+4. Copy the "Issuer" URL → Set as `CLERK_JWT_ISSUER_DOMAIN`
+
+### 3. Polar Setup
+
+1. Create an organization at [polar.sh](https://polar.sh)
+2. Go to Products → Create two subscription products:
+   - **Pro Monthly**: $19/month
+   - **Pro Yearly**: $190/year
+3. Copy Product IDs → Set as `NEXT_PUBLIC_POLAR_PRODUCT_ID_*`
+4. Go to Settings → Developers → Create Access Token → Set as `POLAR_ACCESS_TOKEN`
+5. Go to Settings → Webhooks → Add Endpoint:
+   - URL: `https://your-domain.com/api/webhooks/polar`
+   - Copy secret → Set as `POLAR_WEBHOOK_SECRET`
+
+### 4. Railway Deployment
+
+1. Create project at [railway.com](https://railway.com)
+2. Connect your GitHub repository
+3. Add all environment variables
+4. Set `NEXT_PUBLIC_APP_URL` to your Railway domain
+5. Deploy Convex to production:
+   ```bash
+   npx convex deploy
+   ```
+
+## Project Structure
+
+```
+├── app/                      # Next.js App Router
+│   ├── (authenticated)/      # Protected routes (pro members)
+│   │   └── dashboard/        # Dashboard pages
+│   ├── (unauthenticated)/    # Public routes
+│   │   ├── (marketing)/      # Landing, pricing, features
+│   │   └── (auth)/           # Login, signup
+│   └── api/                  # API routes
+│       ├── checkout/         # Polar checkout
+│       └── webhooks/polar/   # Polar webhooks
+├── actions/                  # Server actions
+├── components/               # React components
+│   ├── payments/             # Checkout components
+│   ├── providers/            # Context providers
+│   └── ui/                   # Shadcn UI components
+├── convex/                   # Convex backend
+│   ├── schema.ts             # Database schema
+│   ├── customers.ts          # Customer queries/mutations
+│   └── http.ts               # HTTP endpoints
+└── lib/                      # Utilities
+```
+
+## Commands
+
+```bash
+# Development
+npm run dev          # Start dev server + Convex
+
+# Database
+npx convex dev       # Run Convex dev server
+npx convex deploy    # Deploy to production
+
+# Code Quality
+npm run lint         # Run ESLint
+npm run types        # TypeScript check
+npm run clean        # Lint + format
+
+# Testing
+npm run test         # Run all tests
+npm run test:unit    # Jest unit tests
+npm run test:e2e     # Playwright e2e tests
+```
+
+## Features
+
+- **Authentication**: Clerk with protected routes
+- **Payments**: Polar subscriptions (monthly/yearly)
+- **Database**: Convex real-time database
+- **Dashboard**: Pro member access only
+- **Marketing**: Landing page with pricing
+- **Dark Mode**: Theme toggle support
+
+## License
+
+MIT

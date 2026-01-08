@@ -1,6 +1,6 @@
 "use client"
 
-import { createCheckoutUrl } from "@/actions/stripe"
+import { createPolarCheckout } from "@/actions/polar"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
@@ -8,14 +8,14 @@ import { useState } from "react"
 import { toast } from "sonner"
 
 interface PricingButtonProps {
-  paymentLink: string
+  productId: string
   children: React.ReactNode
   className?: string
   variant?: "default" | "outline" | "secondary"
 }
 
 export function PricingButton({
-  paymentLink,
+  productId,
   children,
   className,
   variant = "default"
@@ -26,8 +26,8 @@ export function PricingButton({
 
   const handleClick = async () => {
     if (!isSignedIn) {
-      // Store the payment link for post-auth redirect
-      sessionStorage.setItem("pendingCheckout", paymentLink)
+      // Store the product ID for post-auth redirect
+      sessionStorage.setItem("pendingCheckout", productId)
       toast.info("Please sign in to continue")
       router.push("/login")
       return
@@ -35,7 +35,7 @@ export function PricingButton({
 
     setIsLoading(true)
     try {
-      const result = await createCheckoutUrl(paymentLink)
+      const result = await createPolarCheckout(productId)
 
       if (result.error) {
         throw new Error(result.error)

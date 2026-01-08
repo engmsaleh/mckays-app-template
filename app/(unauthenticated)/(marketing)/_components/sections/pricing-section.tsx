@@ -20,7 +20,7 @@ const pricing = [
       "API access",
       "Export data"
     ],
-    paymentLink: process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_MONTHLY,
+    productId: process.env.NEXT_PUBLIC_POLAR_PRODUCT_ID_MONTHLY,
     icon: CreditCard,
     highlight: false
   },
@@ -37,7 +37,7 @@ const pricing = [
       "Dedicated account manager",
       "99.9% uptime SLA"
     ],
-    paymentLink: process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_YEARLY,
+    productId: process.env.NEXT_PUBLIC_POLAR_PRODUCT_ID_YEARLY,
     icon: Zap,
     highlight: true
   }
@@ -169,9 +169,9 @@ export function PricingSection() {
                 ))}
               </ul>
 
-              {tier.paymentLink ? (
+              {tier.productId ? (
                 <PricingButton
-                  paymentLink={tier.paymentLink}
+                  productId={tier.productId}
                   className={`mt-8 w-full ${
                     tier.highlight
                       ? "bg-primary-foreground text-primary hover:bg-primary-foreground/90"
@@ -191,7 +191,7 @@ export function PricingSection() {
                   variant={tier.highlight ? "default" : "outline"}
                   disabled
                 >
-                  Configure payment link
+                  Configure Polar product
                 </Button>
               )}
             </motion.div>

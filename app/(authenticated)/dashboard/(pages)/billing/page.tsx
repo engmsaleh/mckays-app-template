@@ -19,7 +19,6 @@ export default async function BillingPage() {
   }
 
   const customerResponse = await getBillingDataByUserId(userId)
-  console.log(customerResponse)
 
   const customerData = customerResponse.customer
 

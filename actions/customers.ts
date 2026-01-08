@@ -1,62 +1,67 @@
 "use server"
 
-import { db } from "@/db"
-import { customers, type SelectCustomer } from "@/db/schema/customers"
+import { api } from "@/convex/_generated/api"
 import { currentUser } from "@clerk/nextjs/server"
-import { eq } from "drizzle-orm"
+import { ConvexHttpClient } from "convex/browser"
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
+
+export type Customer = {
+  _id: string
+  userId: string
+  membership: "free" | "pro"
+  polarCustomerId?: string
+  polarSubscriptionId?: string
+  createdAt: number
+  updatedAt: number
+}
 
 export async function getCustomerByUserId(
   userId: string
-): Promise<SelectCustomer | null> {
-  const customer = await db.query.customers.findFirst({
-    where: eq(customers.userId, userId)
-  })
-
-  return customer || null
+): Promise<Customer | null> {
+  const customer = await convex.query(api.customers.getByUserId, { userId })
+  return customer as Customer | null
 }
 
 export async function getBillingDataByUserId(userId: string): Promise<{
-  customer: SelectCustomer | null
+  customer: Customer | null
   clerkEmail: string | null
-  stripeEmail: string | null
+  polarEmail: string | null
 }> {
   // Get Clerk user data
   const user = await currentUser()
 
-  // Get profile to fetch Stripe customer ID
-  const customer = await db.query.customers.findFirst({
-    where: eq(customers.userId, userId)
-  })
+  // Get customer from Convex
+  const customer = await convex.query(api.customers.getByUserId, { userId })
 
-  // Get Stripe email if it exists
-  const stripeEmail = customer?.stripeCustomerId
+  // Get Polar email if it exists (using Clerk email for now)
+  const polarEmail = customer?.polarCustomerId
     ? user?.emailAddresses[0]?.emailAddress || null
     : null
 
   return {
-    customer: customer || null,
+    customer: customer as Customer | null,
     clerkEmail: user?.emailAddresses[0]?.emailAddress || null,
-    stripeEmail
+    polarEmail
   }
 }
 
 export async function createCustomer(
   userId: string
-): Promise<{ isSuccess: boolean; data?: SelectCustomer }> {
+): Promise<{ isSuccess: boolean; data?: Customer }> {
   try {
-    const [newCustomer] = await db
-      .insert(customers)
-      .values({
-        userId,
-        membership: "free"
-      })
-      .returning()
+    const customerId = await convex.mutation(api.customers.create, {
+      userId,
+      membership: "free"
+    })
 
-    if (!newCustomer) {
+    const customer = await convex.query(api.customers.getByUserId, { userId })
+
+    if (!customer) {
       return { isSuccess: false }
     }
 
-    return { isSuccess: true, data: newCustomer }
+    return { isSuccess: true, data: customer as Customer }
   } catch (error) {
     console.error("Error creating customer:", error)
     return { isSuccess: false }
@@ -65,44 +70,48 @@ export async function createCustomer(
 
 export async function updateCustomerByUserId(
   userId: string,
-  updates: Partial<SelectCustomer>
-): Promise<{ isSuccess: boolean; data?: SelectCustomer }> {
+  updates: Partial<Omit<Customer, "_id" | "userId" | "createdAt" | "updatedAt">>
+): Promise<{ isSuccess: boolean; data?: Customer }> {
   try {
-    const [updatedCustomer] = await db
-      .update(customers)
-      .set(updates)
-      .where(eq(customers.userId, userId))
-      .returning()
+    await convex.mutation(api.customers.updateByUserId, {
+      userId,
+      ...updates
+    })
 
-    if (!updatedCustomer) {
+    const customer = await convex.query(api.customers.getByUserId, { userId })
+
+    if (!customer) {
       return { isSuccess: false }
     }
 
-    return { isSuccess: true, data: updatedCustomer }
+    return { isSuccess: true, data: customer as Customer }
   } catch (error) {
     console.error("Error updating customer by userId:", error)
     return { isSuccess: false }
   }
 }
 
-export async function updateCustomerByStripeCustomerId(
-  stripeCustomerId: string,
-  updates: Partial<SelectCustomer>
-): Promise<{ isSuccess: boolean; data?: SelectCustomer }> {
+export async function updateCustomerByPolarCustomerId(
+  polarCustomerId: string,
+  updates: Partial<Omit<Customer, "_id" | "userId" | "createdAt" | "updatedAt">>
+): Promise<{ isSuccess: boolean; data?: Customer }> {
   try {
-    const [updatedCustomer] = await db
-      .update(customers)
-      .set(updates)
-      .where(eq(customers.stripeCustomerId, stripeCustomerId))
-      .returning()
+    await convex.mutation(api.customers.updateByPolarCustomerId, {
+      polarCustomerId,
+      ...updates
+    })
 
-    if (!updatedCustomer) {
+    const customer = await convex.query(api.customers.getByPolarCustomerId, {
+      polarCustomerId
+    })
+
+    if (!customer) {
       return { isSuccess: false }
     }
 
-    return { isSuccess: true, data: updatedCustomer }
+    return { isSuccess: true, data: customer as Customer }
   } catch (error) {
-    console.error("Error updating customer by stripeCustomerId:", error)
+    console.error("Error updating customer by polarCustomerId:", error)
     return { isSuccess: false }
   }
 }
